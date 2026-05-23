@@ -31,7 +31,7 @@ object DemoDataFactory {
             title = "Midnight Pulse",
             genre = "Trap",
             bpm = 140,
-            price = BigDecimal("29.99"),
+            price = BigDecimal("2990.00"),
             description = "Dark trap beat for the producer dashboard prototype",
             mp3FileName = "midnight-pulse.mp3",
             mp3StoragePath = "/uploads/demo/midnight-pulse.mp3",
@@ -44,7 +44,7 @@ object DemoDataFactory {
             title = "Velvet Echo",
             genre = "R&B",
             bpm = 96,
-            price = BigDecimal("24.99"),
+            price = BigDecimal("2490.00"),
             description = "Smooth atmospheric beat for melodic vocals",
             mp3FileName = "velvet-echo.mp3",
             mp3StoragePath = "/uploads/demo/velvet-echo.mp3",
@@ -67,6 +67,9 @@ object DemoDataFactory {
             updatedAt = baseTime.plusSeconds(14400),
         )
     }
+
+    fun allStatistics(): Map<UUID, BeatStatistics> =
+        beats().associate { beat -> beat.id to statistics(beat.id) }
 
     fun simulationMessage(beatId: UUID, eventType: BeatEventType): String =
         when (eventType) {
