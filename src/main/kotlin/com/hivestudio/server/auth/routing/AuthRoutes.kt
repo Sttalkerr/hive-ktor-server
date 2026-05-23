@@ -1,6 +1,7 @@
 package com.hivestudio.server.auth.routing
 
-import com.hivestudio.server.auth.model.AuthResponse
+import com.hivestudio.server.auth.model.toAuthResponse
+import com.hivestudio.server.demo.DemoDataFactory
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.response.respond
@@ -13,24 +14,12 @@ fun Route.authRoutes() {
         post("/register") {
             call.respond(
                 status = HttpStatusCode.Created,
-                message = AuthResponse(
-                    id = "demo-producer-id",
-                    email = "producer@hivestudio.dev",
-                    stageName = "Hive Demo",
-                    token = "demo-jwt-token",
-                )
+                message = DemoDataFactory.producer().toAuthResponse(),
             )
         }
 
         post("/login") {
-            call.respond(
-                AuthResponse(
-                    id = "demo-producer-id",
-                    email = "producer@hivestudio.dev",
-                    stageName = "Hive Demo",
-                    token = "demo-jwt-token",
-                )
-            )
+            call.respond(DemoDataFactory.producer().toAuthResponse())
         }
     }
 }
