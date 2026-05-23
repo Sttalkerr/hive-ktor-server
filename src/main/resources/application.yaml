@@ -9,3 +9,5 @@ database:
   jdbcUrl: "jdbc:postgresql://localhost:5432/hive_studio"
   user: "postgres"
   password: "postgres"
+  connectOnStartup: false
+  showSql: false
