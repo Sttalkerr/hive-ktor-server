@@ -1,0 +1,11 @@
+ktor:
+  deployment:
+    port: 8081
+  application:
+    modules:
+      - com.hivestudio.server.ApplicationKt.module
+
+database:
+  jdbcUrl: "jdbc:postgresql://localhost:5432/hive_studio"
+  user: "postgres"
+  password: "postgres"
