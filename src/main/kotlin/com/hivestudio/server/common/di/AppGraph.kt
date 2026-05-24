@@ -26,5 +26,5 @@ object AppGraph {
     val authService: AuthService = AuthService(producerRepository)
     val profileService: ProfileService = ProfileService(producerRepository)
     val beatService: BeatService = BeatService(beatRepository)
-    val statisticsService: StatisticsService = StatisticsService(statisticsRepository)
+    val statisticsService: StatisticsService = StatisticsService(statisticsRepository, beatRepository)
 }

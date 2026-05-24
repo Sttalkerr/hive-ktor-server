@@ -5,8 +5,8 @@ import com.hivestudio.server.domain.model.Beat
 import java.util.UUID
 
 interface BeatRepository {
-    fun getAll(query: String? = null): List<Beat>
-    fun getById(beatId: UUID): Beat
-    fun create(request: CreateBeatRequest): Beat
-    fun delete(beatId: UUID)
+    fun getAll(producerId: UUID, query: String? = null): List<Beat>
+    fun getById(producerId: UUID, beatId: UUID): Beat
+    fun create(producerId: UUID, request: CreateBeatRequest): Beat
+    fun delete(producerId: UUID, beatId: UUID)
 }

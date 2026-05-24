@@ -1,5 +1,6 @@
 package com.hivestudio.server.profile.routing
 
+import com.hivestudio.server.common.auth.requireProducer
 import com.hivestudio.server.profile.model.toProfileResponse
 import com.hivestudio.server.profile.service.ProfileService
 import com.hivestudio.server.common.di.AppGraph
@@ -12,6 +13,7 @@ fun Route.profileRoutes(
     profileService: ProfileService = AppGraph.profileService,
 ) {
     get("/profile") {
-        call.respond(profileService.getProfile().toProfileResponse())
+        val producer = call.requireProducer()
+        call.respond(profileService.getProfile(producer.token).toProfileResponse())
     }
 }

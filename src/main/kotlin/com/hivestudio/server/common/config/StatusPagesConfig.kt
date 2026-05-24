@@ -1,6 +1,7 @@
 package com.hivestudio.server.common.config
 
 import com.hivestudio.server.common.model.ErrorResponse
+import com.hivestudio.server.common.model.UnauthorizedException
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
@@ -26,6 +27,16 @@ fun Application.configureStatusPages() {
                 message = ErrorResponse(
                     status = HttpStatusCode.BadRequest.value,
                     message = cause.message ?: "Invalid request data",
+                )
+            )
+        }
+
+        exception<UnauthorizedException> { call, cause ->
+            call.respond(
+                status = HttpStatusCode.Unauthorized,
+                message = ErrorResponse(
+                    status = HttpStatusCode.Unauthorized.value,
+                    message = cause.message ?: "Authorization required",
                 )
             )
         }

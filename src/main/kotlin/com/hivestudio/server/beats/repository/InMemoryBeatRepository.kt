@@ -1,7 +1,6 @@
 package com.hivestudio.server.beats.repository
 
 import com.hivestudio.server.beats.model.CreateBeatRequest
-import com.hivestudio.server.demo.DemoDataFactory
 import com.hivestudio.server.domain.model.Beat
 import com.hivestudio.server.domain.model.BeatStatistics
 import com.hivestudio.server.store.InMemoryHiveStore
@@ -12,8 +11,10 @@ import java.util.UUID
 class InMemoryBeatRepository(
     private val store: InMemoryHiveStore,
 ) : BeatRepository {
-    override fun getAll(query: String?): List<Beat> {
-        val beats = store.getBeats().sortedByDescending { it.createdAt }
+    override fun getAll(producerId: UUID, query: String?): List<Beat> {
+        val beats = store.getBeats()
+            .filter { it.producerId == producerId }
+            .sortedByDescending { it.createdAt }
         if (query.isNullOrBlank()) return beats
 
         return beats.filter {
@@ -22,14 +23,19 @@ class InMemoryBeatRepository(
         }
     }
 
-    override fun getById(beatId: UUID): Beat =
-        store.getBeat(beatId) ?: throw NoSuchElementException("Beat $beatId not found")
+    override fun getById(producerId: UUID, beatId: UUID): Beat {
+        val beat = store.getBeat(beatId) ?: throw NoSuchElementException("Beat $beatId not found")
+        if (beat.producerId != producerId) {
+            throw NoSuchElementException("Beat $beatId not found")
+        }
+        return beat
+    }
 
-    override fun create(request: CreateBeatRequest): Beat {
+    override fun create(producerId: UUID, request: CreateBeatRequest): Beat {
         val now = Instant.now()
         val beat = Beat(
             id = UUID.randomUUID(),
-            producerId = DemoDataFactory.producer().id,
+            producerId = producerId,
             title = request.title,
             genre = request.genre,
             bpm = request.bpm,
@@ -56,7 +62,8 @@ class InMemoryBeatRepository(
         return beat
     }
 
-    override fun delete(beatId: UUID) {
+    override fun delete(producerId: UUID, beatId: UUID) {
+        getById(producerId, beatId)
         store.removeBeat(beatId)
     }
 }

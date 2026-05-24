@@ -4,6 +4,7 @@ import com.hivestudio.server.beats.model.CreateBeatRequest
 import com.hivestudio.server.beats.model.BeatSummaryResponse
 import com.hivestudio.server.beats.model.toBeatSummaryResponse
 import com.hivestudio.server.beats.service.BeatService
+import com.hivestudio.server.common.auth.requireProducer
 import com.hivestudio.server.common.di.AppGraph
 import com.hivestudio.server.storage.FileStorageService
 import io.ktor.http.ContentType
@@ -28,27 +29,35 @@ fun Route.beatRoutes(
 ) {
     route("/beats") {
         get {
+            val producer = call.requireProducer()
             val query = call.request.queryParameters["query"]
-            val beats: List<BeatSummaryResponse> = beatService.getBeats(query).map { it.toBeatSummaryResponse() }
+            val beats: List<BeatSummaryResponse> = beatService
+                .getBeats(UUID.fromString(producer.id), query)
+                .map { it.toBeatSummaryResponse() }
             call.respond(beats)
         }
 
         get("/{beatId}") {
+            val producer = call.requireProducer()
             val beatId = call.parameters["beatId"]?.let(UUID::fromString)
-                ?: beatService.getBeats(query = null).first().id
-            call.respond(beatService.getBeat(beatId).toBeatSummaryResponse())
+                ?: throw IllegalArgumentException("Beat ID is required")
+            call.respond(beatService.getBeat(UUID.fromString(producer.id), beatId).toBeatSummaryResponse())
         }
 
         post {
+            val producer = call.requireProducer()
             val request = call.parseCreateBeatRequest(fileStorageService)
             call.respond(
                 status = HttpStatusCode.Created,
-                message = beatService.createBeat(request).toBeatSummaryResponse(),
+                message = beatService.createBeat(UUID.fromString(producer.id), request).toBeatSummaryResponse(),
             )
         }
 
         delete("/{beatId}") {
-            call.parameters["beatId"]?.let(UUID::fromString)?.let(beatService::deleteBeat)
+            val producer = call.requireProducer()
+            val beatId = call.parameters["beatId"]?.let(UUID::fromString)
+                ?: throw IllegalArgumentException("Beat ID is required")
+            beatService.deleteBeat(UUID.fromString(producer.id), beatId)
             call.respond(HttpStatusCode.NoContent)
         }
     }

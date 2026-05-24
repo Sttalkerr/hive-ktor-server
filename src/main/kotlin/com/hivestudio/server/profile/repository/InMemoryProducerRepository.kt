@@ -10,8 +10,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 class InMemoryProducerRepository : ProducerRepository {
     private val producers = ConcurrentHashMap<String, ProducerRecord>()
-    @Volatile
-    private var currentProducerEmail: String
+    private val tokens = ConcurrentHashMap<String, String>()
 
     init {
         val seed = DemoDataFactory.producer()
@@ -19,12 +18,7 @@ class InMemoryProducerRepository : ProducerRepository {
             producer = seed,
             plainPassword = "secret123",
         )
-        currentProducerEmail = seed.email.lowercase()
     }
-
-    override fun getCurrent(): Producer =
-        producers[currentProducerEmail]?.producer
-            ?: throw NoSuchElementException("Current producer not found")
 
     override fun register(request: RegisterRequest): Producer {
         val emailKey = request.email.trim().lowercase()
@@ -45,7 +39,6 @@ class InMemoryProducerRepository : ProducerRepository {
             producer = producer,
             plainPassword = request.password,
         )
-        currentProducerEmail = emailKey
         return producer
     }
 
@@ -56,8 +49,20 @@ class InMemoryProducerRepository : ProducerRepository {
         if (record.plainPassword != request.password) {
             throw IllegalArgumentException("Invalid password")
         }
-        currentProducerEmail = emailKey
         return record.producer
+    }
+
+    override fun issueToken(producer: Producer): String {
+        val token = "hive-${UUID.randomUUID()}"
+        tokens[token] = producer.email.lowercase()
+        return token
+    }
+
+    override fun getByToken(token: String): Producer {
+        val emailKey = tokens[token]
+            ?: throw NoSuchElementException("Session token not found")
+        return producers[emailKey]?.producer
+            ?: throw NoSuchElementException("Producer for session token not found")
     }
 }
 

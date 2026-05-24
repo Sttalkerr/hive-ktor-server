@@ -18,8 +18,7 @@ fun Route.authRoutes(
 ) {
     route("/auth") {
         post("/register") {
-            val request = runCatching { call.receive<RegisterRequest>() }
-                .getOrElse { RegisterRequest("producer@hivestudio.dev", "secret123", "Hive Demo") }
+            val request = call.receive<RegisterRequest>()
             call.respond(
                 status = HttpStatusCode.Created,
                 message = authService.register(request).toAuthResponse(),
@@ -27,8 +26,7 @@ fun Route.authRoutes(
         }
 
         post("/login") {
-            val request = runCatching { call.receive<LoginRequest>() }
-                .getOrElse { LoginRequest("producer@hivestudio.dev", "secret123") }
+            val request = call.receive<LoginRequest>()
             call.respond(authService.login(request).toAuthResponse())
         }
     }

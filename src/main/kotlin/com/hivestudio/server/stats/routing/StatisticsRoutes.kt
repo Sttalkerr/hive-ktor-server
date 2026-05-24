@@ -1,5 +1,6 @@
 package com.hivestudio.server.stats.routing
 
+import com.hivestudio.server.common.auth.requireProducer
 import com.hivestudio.server.common.di.AppGraph
 import com.hivestudio.server.domain.model.BeatEventType
 import com.hivestudio.server.stats.service.StatisticsService
@@ -18,8 +19,10 @@ fun Route.statisticsRoutes(
 ) {
     route("/beats/{beatId}") {
         get("/stats") {
-            val beatId = call.parameters["beatId"]?.let(UUID::fromString) ?: DEFAULT_BEAT_ID
-            call.respond(statisticsService.getStatistics(beatId).toStatisticsResponse())
+            val producer = call.requireProducer()
+            val beatId = call.parameters["beatId"]?.let(UUID::fromString)
+                ?: throw IllegalArgumentException("Beat ID is required")
+            call.respond(statisticsService.getStatistics(UUID.fromString(producer.id), beatId).toStatisticsResponse())
         }
 
         route("/simulate") {
@@ -38,17 +41,17 @@ fun Route.statisticsRoutes(
     }
 }
 
-private val DEFAULT_BEAT_ID: UUID = UUID.fromString("22222222-2222-2222-2222-222222222222")
-
 private suspend fun io.ktor.server.application.ApplicationCall.respondSimulationEvent(
     statisticsService: StatisticsService,
     eventType: BeatEventType,
 ) {
-    val beatId = parameters["beatId"]?.let(UUID::fromString) ?: DEFAULT_BEAT_ID
+    val producer = requireProducer()
+    val beatId = parameters["beatId"]?.let(UUID::fromString)
+        ?: throw IllegalArgumentException("Beat ID is required")
     respond(
         eventType.toSimulationResponse(
             beatId = beatId,
-            message = statisticsService.recordEvent(beatId, eventType),
+            message = statisticsService.recordEvent(UUID.fromString(producer.id), beatId, eventType),
         )
     )
 }

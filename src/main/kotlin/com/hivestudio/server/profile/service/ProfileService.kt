@@ -6,6 +6,6 @@ import com.hivestudio.server.profile.repository.ProducerRepository
 class ProfileService(
     private val producerRepository: ProducerRepository,
 ) {
-    fun getProfile(): Producer =
-        producerRepository.getCurrent()
+    fun getProfile(token: String): Producer =
+        producerRepository.getByToken(token)
 }

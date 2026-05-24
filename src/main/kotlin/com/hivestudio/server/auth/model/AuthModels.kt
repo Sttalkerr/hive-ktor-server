@@ -22,3 +22,10 @@ data class AuthResponse(
     val stageName: String,
     val token: String,
 )
+
+data class AuthSession(
+    val id: String,
+    val email: String,
+    val stageName: String,
+    val token: String,
+)

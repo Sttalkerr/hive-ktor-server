@@ -1,14 +1,18 @@
 package com.hivestudio.server
 
-import io.ktor.client.request.get
-import io.ktor.client.request.post
 import io.ktor.client.request.delete
+import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
+import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
+import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -23,7 +27,10 @@ class ApplicationTest {
 
     @Test
     fun beatListEndpointReturnsOk() = testApplication {
-        val response = client.get("/api/v1/beats")
+        val token = loginAndExtractToken()
+        val response = client.get("/api/v1/beats") {
+            bearer(token)
+        }
         assertEquals(HttpStatusCode.OK, response.status)
         val body = response.bodyAsText()
         assertTrue(body.contains("["))
@@ -32,12 +39,13 @@ class ApplicationTest {
 
     @Test
     fun registerEndpointReturnsCreated() = testApplication {
+        val email = "new-producer-${UUID.randomUUID()}@hive.dev"
         val response = client.post("/api/v1/auth/register") {
             contentType(ContentType.Application.Json)
             setBody(
                 """
                 {
-                  "email": "new-producer@hive.dev",
+                  "email": "$email",
                   "password": "secret123",
                   "stageName": "North Hive"
                 }
@@ -46,34 +54,41 @@ class ApplicationTest {
         }
         assertEquals(HttpStatusCode.Created, response.status)
         assertTrue(response.bodyAsText().contains("North Hive"))
+        assertTrue(response.bodyAsText().contains("token"))
     }
 
     @Test
-    fun profileReflectsLastRegisteredProducer() = testApplication {
-        client.post("/api/v1/auth/register") {
-            contentType(ContentType.Application.Json)
-            setBody(
-                """
-                {
-                  "email": "profile-check@hive.dev",
-                  "password": "secret123",
-                  "stageName": "Profile Check"
-                }
-                """.trimIndent()
-            )
-        }
+    fun profileReflectsAuthorizedProducer() = testApplication {
+        val token = registerAndExtractToken(
+            email = "profile-check@hive.dev",
+            stageName = "Profile Check",
+        )
 
-        val response = client.get("/api/v1/profile")
+        val response = client.get("/api/v1/profile") {
+            bearer(token)
+        }
         assertEquals(HttpStatusCode.OK, response.status)
         assertTrue(response.bodyAsText().contains("Profile Check"))
     }
 
     @Test
+    fun profileRequiresBearerToken() = testApplication {
+        val response = client.get("/api/v1/profile")
+        assertEquals(HttpStatusCode.Unauthorized, response.status)
+        assertTrue(response.bodyAsText().contains("авторизация", ignoreCase = true))
+    }
+
+    @Test
     fun createBeatEndpointAcceptsJsonBody() = testApplication {
-        val beforeResponse = client.get("/api/v1/beats")
+        val token = registerAndExtractToken()
+
+        val beforeResponse = client.get("/api/v1/beats") {
+            bearer(token)
+        }
         val beforeCount = extractObjectCount(beforeResponse.bodyAsText())
 
         val createResponse = client.post("/api/v1/beats") {
+            bearer(token)
             contentType(ContentType.Application.Json)
             setBody(
                 """
@@ -90,7 +105,9 @@ class ApplicationTest {
             )
         }
 
-        val afterResponse = client.get("/api/v1/beats")
+        val afterResponse = client.get("/api/v1/beats") {
+            bearer(token)
+        }
         val afterCount = extractObjectCount(afterResponse.bodyAsText())
 
         assertEquals(HttpStatusCode.Created, createResponse.status)
@@ -100,12 +117,19 @@ class ApplicationTest {
 
     @Test
     fun simulatePurchaseEndpointChangesStatistics() = testApplication {
+        val token = loginAndExtractToken()
         val beatId = "22222222-2222-2222-2222-222222222222"
-        val beforeResponse = client.get("/api/v1/beats/$beatId/stats")
+        val beforeResponse = client.get("/api/v1/beats/$beatId/stats") {
+            bearer(token)
+        }
         val beforePurchases = extractIntField(beforeResponse.bodyAsText(), "purchasesCount")
 
-        val simulateResponse = client.post("/api/v1/beats/$beatId/simulate/purchase")
-        val afterResponse = client.get("/api/v1/beats/$beatId/stats")
+        val simulateResponse = client.post("/api/v1/beats/$beatId/simulate/purchase") {
+            bearer(token)
+        }
+        val afterResponse = client.get("/api/v1/beats/$beatId/stats") {
+            bearer(token)
+        }
         val afterPurchases = extractIntField(afterResponse.bodyAsText(), "purchasesCount")
 
         assertEquals(HttpStatusCode.OK, simulateResponse.status)
@@ -115,7 +139,9 @@ class ApplicationTest {
 
     @Test
     fun deleteBeatEndpointRemovesBeatAndStatsReturnNotFound() = testApplication {
+        val token = registerAndExtractToken()
         val createResponse = client.post("/api/v1/beats") {
+            bearer(token)
             contentType(ContentType.Application.Json)
             setBody(
                 """
@@ -133,13 +159,95 @@ class ApplicationTest {
         }
         val beatId = extractStringField(createResponse.bodyAsText(), "id")
 
-        val deleteResponse = client.delete("/api/v1/beats/$beatId")
-        val statsResponse = client.get("/api/v1/beats/$beatId/stats")
+        val deleteResponse = client.delete("/api/v1/beats/$beatId") {
+            bearer(token)
+        }
+        val statsResponse = client.get("/api/v1/beats/$beatId/stats") {
+            bearer(token)
+        }
 
         assertEquals(HttpStatusCode.NoContent, deleteResponse.status)
         assertEquals(HttpStatusCode.NotFound, statsResponse.status)
         assertTrue(statsResponse.bodyAsText().contains("not found", ignoreCase = true))
     }
+
+    @Test
+    fun producersSeeOnlyOwnBeatCatalog() = testApplication {
+        val firstToken = registerAndExtractToken(
+            email = "first@hive.dev",
+            stageName = "First Hive",
+        )
+        client.post("/api/v1/beats") {
+            bearer(firstToken)
+            contentType(ContentType.Application.Json)
+            setBody(
+                """
+                {
+                  "title": "Private Beat",
+                  "genre": "Trap",
+                  "bpm": 140,
+                  "price": 2990.0,
+                  "description": "Owned only by first producer",
+                  "mp3FileName": "private.mp3",
+                  "coverImageFileName": "private-cover.jpg"
+                }
+                """.trimIndent()
+            )
+        }
+
+        val secondToken = registerAndExtractToken(
+            email = "second@hive.dev",
+            stageName = "Second Hive",
+        )
+        val secondCatalog = client.get("/api/v1/beats") {
+            bearer(secondToken)
+        }
+
+        assertEquals(HttpStatusCode.OK, secondCatalog.status)
+        assertEquals(0, extractObjectCount(secondCatalog.bodyAsText()))
+    }
+}
+
+private suspend fun ApplicationTestBuilder.registerAndExtractToken(
+    email: String = "new-producer-${UUID.randomUUID()}@hive.dev",
+    password: String = "secret123",
+    stageName: String = "North Hive",
+): String {
+    val response = client.post("/api/v1/auth/register") {
+        contentType(ContentType.Application.Json)
+        setBody(
+            """
+            {
+              "email": "$email",
+              "password": "$password",
+              "stageName": "$stageName"
+            }
+            """.trimIndent()
+        )
+    }
+    return extractStringField(response.bodyAsText(), "token")
+}
+
+private suspend fun ApplicationTestBuilder.loginAndExtractToken(
+    email: String = "producer@hivestudio.dev",
+    password: String = "secret123",
+): String {
+    val response = client.post("/api/v1/auth/login") {
+        contentType(ContentType.Application.Json)
+        setBody(
+            """
+            {
+              "email": "$email",
+              "password": "$password"
+            }
+            """.trimIndent()
+        )
+    }
+    return extractStringField(response.bodyAsText(), "token")
+}
+
+private fun io.ktor.client.request.HttpRequestBuilder.bearer(token: String) {
+    header(HttpHeaders.Authorization, "Bearer $token")
 }
 
 private fun extractObjectCount(json: String): Int =

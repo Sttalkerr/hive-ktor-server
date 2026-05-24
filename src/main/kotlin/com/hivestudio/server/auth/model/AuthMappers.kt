@@ -1,11 +1,9 @@
 package com.hivestudio.server.auth.model
 
-import com.hivestudio.server.domain.model.Producer
-
-fun Producer.toAuthResponse(): AuthResponse =
+fun AuthSession.toAuthResponse(): AuthResponse =
     AuthResponse(
-        id = id.toString(),
+        id = id,
         email = email,
         stageName = stageName,
-        token = "demo-jwt-token",
+        token = token,
     )

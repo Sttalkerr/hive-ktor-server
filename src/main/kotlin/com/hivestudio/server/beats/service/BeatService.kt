@@ -8,17 +8,17 @@ import java.util.UUID
 class BeatService(
     private val beatRepository: BeatRepository,
 ) {
-    fun getBeats(query: String?): List<Beat> =
-        beatRepository.getAll(query)
+    fun getBeats(producerId: UUID, query: String?): List<Beat> =
+        beatRepository.getAll(producerId, query)
 
-    fun getBeat(beatId: UUID): Beat =
-        beatRepository.getById(beatId)
+    fun getBeat(producerId: UUID, beatId: UUID): Beat =
+        beatRepository.getById(producerId, beatId)
 
-    fun createBeat(request: CreateBeatRequest): Beat =
-        beatRepository.create(request)
+    fun createBeat(producerId: UUID, request: CreateBeatRequest): Beat =
+        beatRepository.create(producerId, request)
 
-    fun deleteBeat(beatId: UUID) {
-        beatRepository.getById(beatId)
-        beatRepository.delete(beatId)
+    fun deleteBeat(producerId: UUID, beatId: UUID) {
+        beatRepository.getById(producerId, beatId)
+        beatRepository.delete(producerId, beatId)
     }
 }

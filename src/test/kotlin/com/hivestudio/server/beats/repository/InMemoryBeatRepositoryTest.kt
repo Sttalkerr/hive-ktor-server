@@ -12,8 +12,10 @@ class InMemoryBeatRepositoryTest {
     fun createAddsNewBeatToStore() {
         val store = InMemoryHiveStore.seeded()
         val repository = InMemoryBeatRepository(store)
+        val producerId = DemoDataFactory.producer().id
 
         val created = repository.create(
+            producerId,
             CreateBeatRequest(
                 title = "North District",
                 genre = "Drill",
@@ -25,8 +27,8 @@ class InMemoryBeatRepositoryTest {
             )
         )
 
-        assertEquals(3, repository.getAll().size)
-        assertTrue(repository.getById(created.id).title == "North District")
+        assertEquals(3, repository.getAll(producerId).size)
+        assertTrue(repository.getById(producerId, created.id).title == "North District")
         assertEquals(0, store.getStatistics(created.id)?.playsCount)
     }
 
@@ -34,11 +36,12 @@ class InMemoryBeatRepositoryTest {
     fun deleteRemovesBeatFromStore() {
         val store = InMemoryHiveStore.seeded()
         val repository = InMemoryBeatRepository(store)
+        val producerId = DemoDataFactory.producer().id
         val beatId = DemoDataFactory.beats().first().id
 
-        repository.delete(beatId)
+        repository.delete(producerId, beatId)
 
-        assertEquals(1, repository.getAll().size)
+        assertEquals(1, repository.getAll(producerId).size)
         assertEquals(null, store.getStatistics(beatId))
     }
 }
