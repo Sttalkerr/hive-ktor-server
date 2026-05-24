@@ -42,6 +42,7 @@ fun Route.beatRoutes(
                         price = 29.99,
                         description = "Dark trap beat for the producer dashboard prototype",
                         mp3FileName = "midnight-pulse.mp3",
+                        coverImageFileName = "midnight-pulse-cover.jpg",
                     )
                 }
             call.respond(

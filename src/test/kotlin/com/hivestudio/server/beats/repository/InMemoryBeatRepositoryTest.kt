@@ -21,6 +21,7 @@ class InMemoryBeatRepositoryTest {
                 price = 3190.0,
                 description = "Aggressive drill beat",
                 mp3FileName = "north-district.mp3",
+                coverImageFileName = "north-district-cover.jpg",
             )
         )
 

@@ -18,7 +18,9 @@ create table if not exists beats (
     price numeric(10, 2) not null check (price >= 0),
     description text not null,
     mp3_file_name varchar(255) not null,
+    cover_image_file_name varchar(255) not null,
     mp3_storage_path text not null,
+    cover_image_storage_path text not null,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );

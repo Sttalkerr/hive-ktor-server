@@ -52,7 +52,8 @@ class ApplicationTest {
                   "bpm": 144,
                   "price": 3190.0,
                   "description": "Aggressive drill beat",
-                  "mp3FileName": "north-district.mp3"
+                  "mp3FileName": "north-district.mp3",
+                  "coverImageFileName": "north-district-cover.jpg"
                 }
                 """.trimIndent()
             )
@@ -93,7 +94,8 @@ class ApplicationTest {
                   "bpm": 150,
                   "price": 4100.0,
                   "description": "Beat to delete",
-                  "mp3FileName": "erase-me.mp3"
+                  "mp3FileName": "erase-me.mp3",
+                  "coverImageFileName": "erase-me-cover.jpg"
                 }
                 """.trimIndent()
             )

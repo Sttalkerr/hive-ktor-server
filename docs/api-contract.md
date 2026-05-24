@@ -94,6 +94,7 @@ Response `200 OK`:
     "price": 29.99,
     "description": "Dark trap beat",
     "mp3FileName": "midnight-pulse.mp3",
+    "coverImageFileName": "midnight-pulse-cover.jpg",
     "createdAt": "2026-05-24T00:00:00Z"
   }
 ]
@@ -115,6 +116,7 @@ Form fields:
 - `price`
 - `description`
 - `mp3`
+- `coverImage`
 
 Response `201 Created`:
 
@@ -124,11 +126,12 @@ Response `201 Created`:
   "title": "Midnight Pulse",
   "genre": "Trap",
   "bpm": 140,
-  "price": 29.99,
-  "description": "Dark trap beat",
-  "mp3FileName": "midnight-pulse.mp3",
-  "createdAt": "2026-05-24T00:00:00Z"
-}
+    "price": 29.99,
+    "description": "Dark trap beat",
+    "mp3FileName": "midnight-pulse.mp3",
+    "coverImageFileName": "midnight-pulse-cover.jpg",
+    "createdAt": "2026-05-24T00:00:00Z"
+  }
 ```
 
 ### `DELETE /beats/{beatId}`

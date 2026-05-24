@@ -11,6 +11,7 @@ data class BeatSummaryResponse(
     val price: Double,
     val description: String,
     val mp3FileName: String,
+    val coverImageFileName: String,
     val createdAt: String,
 )
 
@@ -22,4 +23,5 @@ data class CreateBeatRequest(
     val price: Double,
     val description: String,
     val mp3FileName: String,
+    val coverImageFileName: String,
 )

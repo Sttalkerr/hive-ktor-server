@@ -36,7 +36,9 @@ class InMemoryBeatRepository(
             price = BigDecimal.valueOf(request.price),
             description = request.description,
             mp3FileName = request.mp3FileName,
+            coverImageFileName = request.coverImageFileName,
             mp3StoragePath = "/uploads/demo/${request.mp3FileName}",
+            coverImageStoragePath = "/uploads/demo/${request.coverImageFileName}",
             createdAt = now,
             updatedAt = now,
         )

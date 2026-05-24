@@ -20,7 +20,9 @@ object BeatsTable : UUIDTable("beats") {
     val price = decimal("price", precision = 10, scale = 2)
     val description = text("description")
     val mp3FileName = varchar("mp3_file_name", 255)
+    val coverImageFileName = varchar("cover_image_file_name", 255)
     val mp3StoragePath = text("mp3_storage_path")
+    val coverImageStoragePath = text("cover_image_storage_path")
     val createdAt = timestampWithTimeZone("created_at")
     val updatedAt = timestampWithTimeZone("updated_at")
 }
