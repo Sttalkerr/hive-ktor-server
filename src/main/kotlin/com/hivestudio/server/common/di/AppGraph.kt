@@ -4,7 +4,7 @@ import com.hivestudio.server.auth.service.AuthService
 import com.hivestudio.server.beats.repository.BeatRepository
 import com.hivestudio.server.beats.repository.InMemoryBeatRepository
 import com.hivestudio.server.beats.service.BeatService
-import com.hivestudio.server.profile.repository.DemoProducerRepository
+import com.hivestudio.server.profile.repository.InMemoryProducerRepository
 import com.hivestudio.server.profile.repository.ProducerRepository
 import com.hivestudio.server.profile.service.ProfileService
 import com.hivestudio.server.stats.repository.InMemoryStatisticsRepository
@@ -19,7 +19,7 @@ object AppGraph {
     val storageSettings: StorageSettings = StorageSettings(uploadDir = "./storage/uploads")
     val fileStorageService: FileStorageService = FileStorageService(storageSettings)
 
-    val producerRepository: ProducerRepository = DemoProducerRepository()
+    val producerRepository: ProducerRepository = InMemoryProducerRepository()
     val beatRepository: BeatRepository = InMemoryBeatRepository(store)
     val statisticsRepository: StatisticsRepository = InMemoryStatisticsRepository(store)
 

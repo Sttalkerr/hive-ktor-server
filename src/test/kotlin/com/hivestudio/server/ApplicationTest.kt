@@ -32,9 +32,40 @@ class ApplicationTest {
 
     @Test
     fun registerEndpointReturnsCreated() = testApplication {
-        val response = client.post("/api/v1/auth/register")
+        val response = client.post("/api/v1/auth/register") {
+            contentType(ContentType.Application.Json)
+            setBody(
+                """
+                {
+                  "email": "new-producer@hive.dev",
+                  "password": "secret123",
+                  "stageName": "North Hive"
+                }
+                """.trimIndent()
+            )
+        }
         assertEquals(HttpStatusCode.Created, response.status)
-        assertTrue(response.bodyAsText().contains("demo-jwt-token"))
+        assertTrue(response.bodyAsText().contains("North Hive"))
+    }
+
+    @Test
+    fun profileReflectsLastRegisteredProducer() = testApplication {
+        client.post("/api/v1/auth/register") {
+            contentType(ContentType.Application.Json)
+            setBody(
+                """
+                {
+                  "email": "profile-check@hive.dev",
+                  "password": "secret123",
+                  "stageName": "Profile Check"
+                }
+                """.trimIndent()
+            )
+        }
+
+        val response = client.get("/api/v1/profile")
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertTrue(response.bodyAsText().contains("Profile Check"))
     }
 
     @Test
