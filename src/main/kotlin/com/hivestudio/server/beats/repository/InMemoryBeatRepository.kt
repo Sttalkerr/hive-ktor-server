@@ -43,8 +43,8 @@ class InMemoryBeatRepository(
             description = request.description,
             mp3FileName = request.mp3FileName,
             coverImageFileName = request.coverImageFileName,
-            mp3StoragePath = "/uploads/demo/${request.mp3FileName}",
-            coverImageStoragePath = "/uploads/demo/${request.coverImageFileName}",
+            mp3StoragePath = "/uploads/${request.mp3FileName}",
+            coverImageStoragePath = "/uploads/${request.coverImageFileName}",
             createdAt = now,
             updatedAt = now,
         )

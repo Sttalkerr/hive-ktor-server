@@ -11,6 +11,8 @@ fun Beat.toBeatSummaryResponse(): BeatSummaryResponse =
         price = price.toDouble(),
         description = description,
         mp3FileName = mp3FileName,
+        mp3Url = mp3StoragePath,
         coverImageFileName = coverImageFileName,
+        coverImageUrl = coverImageStoragePath,
         createdAt = createdAt.toString(),
     )
