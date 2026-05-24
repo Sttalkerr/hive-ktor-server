@@ -4,20 +4,24 @@ import com.hivestudio.server.auth.model.LoginRequest
 import com.hivestudio.server.auth.model.RegisterRequest
 import com.hivestudio.server.demo.DemoDataFactory
 import com.hivestudio.server.domain.model.Producer
+import com.hivestudio.server.profile.model.UpdateProfileRequest
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 class InMemoryProducerRepository : ProducerRepository {
     private val producers = ConcurrentHashMap<String, ProducerRecord>()
+    private val producersById = ConcurrentHashMap<UUID, String>()
     private val tokens = ConcurrentHashMap<String, String>()
 
     init {
         val seed = DemoDataFactory.producer()
-        producers[seed.email.lowercase()] = ProducerRecord(
+        val emailKey = seed.email.lowercase()
+        producers[emailKey] = ProducerRecord(
             producer = seed,
             plainPassword = "secret123",
         )
+        producersById[seed.id] = emailKey
     }
 
     override fun register(request: RegisterRequest): Producer {
@@ -32,6 +36,11 @@ class InMemoryProducerRepository : ProducerRepository {
             email = request.email.trim(),
             passwordHash = "hash:${request.password}",
             stageName = request.stageName.trim(),
+            bio = "",
+            city = "",
+            contactTag = "",
+            avatarFileName = null,
+            avatarStoragePath = null,
             createdAt = now,
             updatedAt = now,
         )
@@ -39,6 +48,7 @@ class InMemoryProducerRepository : ProducerRepository {
             producer = producer,
             plainPassword = request.password,
         )
+        producersById[producer.id] = emailKey
         return producer
     }
 
@@ -63,6 +73,44 @@ class InMemoryProducerRepository : ProducerRepository {
             ?: throw NoSuchElementException("Session token not found")
         return producers[emailKey]?.producer
             ?: throw NoSuchElementException("Producer for session token not found")
+    }
+
+    override fun getById(producerId: UUID): Producer {
+        val emailKey = producersById[producerId]
+            ?: throw NoSuchElementException("Producer $producerId not found")
+        return producers[emailKey]?.producer
+            ?: throw NoSuchElementException("Producer $producerId not found")
+    }
+
+    override fun updateProfile(producerId: UUID, request: UpdateProfileRequest): Producer {
+        val current = getById(producerId)
+        val updated = current.copy(
+            stageName = request.stageName.trim(),
+            bio = request.bio.trim(),
+            city = request.city.trim(),
+            contactTag = request.contactTag.trim(),
+            updatedAt = Instant.now(),
+        )
+        save(updated)
+        return updated
+    }
+
+    override fun updateAvatar(producerId: UUID, avatarFileName: String): Producer {
+        val current = getById(producerId)
+        val updated = current.copy(
+            avatarFileName = avatarFileName,
+            avatarStoragePath = "/uploads/$avatarFileName",
+            updatedAt = Instant.now(),
+        )
+        save(updated)
+        return updated
+    }
+
+    private fun save(producer: Producer) {
+        val emailKey = producer.email.lowercase()
+        val currentRecord = producers[emailKey] ?: error("Producer ${producer.email} not found")
+        producers[emailKey] = currentRecord.copy(producer = producer)
+        producersById[producer.id] = emailKey
     }
 }
 

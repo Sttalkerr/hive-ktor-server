@@ -27,13 +27,30 @@ fun Route.beatRoutes(
     beatService: BeatService = AppGraph.beatService,
     fileStorageService: FileStorageService = AppGraph.fileStorageService,
 ) {
+    route("/catalog/beats") {
+        get {
+            val query = call.request.queryParameters["query"]
+            val beats: List<BeatSummaryResponse> = beatService
+                .getCatalogBeats(query)
+                .map { (beat, producer) -> beat.toBeatSummaryResponse(producer) }
+            call.respond(beats)
+        }
+
+        get("/{beatId}") {
+            val beatId = call.parameters["beatId"]?.let(UUID::fromString)
+                ?: throw IllegalArgumentException("Beat ID is required")
+            val (beat, producer) = beatService.getCatalogBeat(beatId)
+            call.respond(beat.toBeatSummaryResponse(producer))
+        }
+    }
+
     route("/beats") {
         get {
             val producer = call.requireProducer()
             val query = call.request.queryParameters["query"]
             val beats: List<BeatSummaryResponse> = beatService
                 .getBeats(UUID.fromString(producer.id), query)
-                .map { it.toBeatSummaryResponse() }
+                .map { (beat, owner) -> beat.toBeatSummaryResponse(owner) }
             call.respond(beats)
         }
 
@@ -41,7 +58,8 @@ fun Route.beatRoutes(
             val producer = call.requireProducer()
             val beatId = call.parameters["beatId"]?.let(UUID::fromString)
                 ?: throw IllegalArgumentException("Beat ID is required")
-            call.respond(beatService.getBeat(UUID.fromString(producer.id), beatId).toBeatSummaryResponse())
+            val (beat, owner) = beatService.getBeat(UUID.fromString(producer.id), beatId)
+            call.respond(beat.toBeatSummaryResponse(owner))
         }
 
         post {
@@ -49,7 +67,8 @@ fun Route.beatRoutes(
             val request = call.parseCreateBeatRequest(fileStorageService)
             call.respond(
                 status = HttpStatusCode.Created,
-                message = beatService.createBeat(UUID.fromString(producer.id), request).toBeatSummaryResponse(),
+                message = beatService.createBeat(UUID.fromString(producer.id), request)
+                    .toBeatSummaryResponse(AppGraph.producerRepository.getById(UUID.fromString(producer.id))),
             )
         }
 

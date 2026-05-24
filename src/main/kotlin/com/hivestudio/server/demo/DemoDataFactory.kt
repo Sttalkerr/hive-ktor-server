@@ -21,6 +21,11 @@ object DemoDataFactory {
             email = "producer@hivestudio.dev",
             passwordHash = "demo-password-hash",
             stageName = "Hive Demo",
+            bio = "Продюсер электронных и trap-релизов для Hive Studio.",
+            city = "Москва",
+            contactTag = "@hive_demo",
+            avatarFileName = null,
+            avatarStoragePath = null,
             createdAt = baseTime,
             updatedAt = baseTime,
         )

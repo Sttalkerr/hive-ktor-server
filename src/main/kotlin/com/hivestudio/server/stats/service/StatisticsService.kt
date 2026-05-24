@@ -11,6 +11,11 @@ class StatisticsService(
     private val statisticsRepository: StatisticsRepository,
     private val beatRepository: BeatRepository,
 ) {
+    fun getStatistics(beatId: UUID): BeatStatistics {
+        beatRepository.getPublicById(beatId)
+        return statisticsRepository.getStatistics(beatId)
+    }
+
     fun getStatistics(producerId: UUID, beatId: UUID): BeatStatistics {
         beatRepository.getById(producerId, beatId)
         return statisticsRepository.getStatistics(beatId)
@@ -23,6 +28,11 @@ class StatisticsService(
 
     fun getHistory(producerId: UUID, beatId: UUID, days: Int = 7): List<BeatHistoryPoint> {
         beatRepository.getById(producerId, beatId)
+        return statisticsRepository.getHistory(beatId, days)
+    }
+
+    fun getHistory(beatId: UUID, days: Int = 7): List<BeatHistoryPoint> {
+        beatRepository.getPublicById(beatId)
         return statisticsRepository.getHistory(beatId, days)
     }
 }

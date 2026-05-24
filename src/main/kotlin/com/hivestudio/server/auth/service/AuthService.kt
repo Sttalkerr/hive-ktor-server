@@ -23,6 +23,7 @@ class AuthService(
             id = id.toString(),
             email = email,
             stageName = stageName,
+            avatarUrl = avatarStoragePath,
             token = producerRepository.issueToken(this),
         )
 }

@@ -5,5 +5,6 @@ fun AuthSession.toAuthResponse(): AuthResponse =
         id = id,
         email = email,
         stageName = stageName,
+        avatarUrl = avatarUrl,
         token = token,
     )

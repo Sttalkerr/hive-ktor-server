@@ -20,6 +20,7 @@ data class AuthResponse(
     val id: String,
     val email: String,
     val stageName: String,
+    val avatarUrl: String?,
     val token: String,
 )
 
@@ -27,5 +28,6 @@ data class AuthSession(
     val id: String,
     val email: String,
     val stageName: String,
+    val avatarUrl: String?,
     val token: String,
 )

@@ -18,6 +18,24 @@ import java.util.UUID
 fun Route.statisticsRoutes(
     statisticsService: StatisticsService = AppGraph.statisticsService,
 ) {
+    route("/catalog/beats/{beatId}") {
+        get("/stats") {
+            val beatId = call.parameters["beatId"]?.let(UUID::fromString)
+                ?: throw IllegalArgumentException("Beat ID is required")
+            call.respond(statisticsService.getStatistics(beatId).toStatisticsResponse())
+        }
+
+        get("/history") {
+            val beatId = call.parameters["beatId"]?.let(UUID::fromString)
+                ?: throw IllegalArgumentException("Beat ID is required")
+            val days = call.request.queryParameters["days"]?.toIntOrNull() ?: 7
+            call.respond(
+                statisticsService.getHistory(beatId, days)
+                    .map { it.toHistoryResponse() }
+            )
+        }
+    }
+
     route("/beats/{beatId}") {
         get("/stats") {
             val producer = call.requireProducer()

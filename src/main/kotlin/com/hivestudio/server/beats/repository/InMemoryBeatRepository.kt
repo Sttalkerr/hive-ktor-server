@@ -12,16 +12,15 @@ class InMemoryBeatRepository(
     private val store: InMemoryHiveStore,
 ) : BeatRepository {
     override fun getAll(producerId: UUID, query: String?): List<Beat> {
-        val beats = store.getBeats()
-            .filter { it.producerId == producerId }
-            .sortedByDescending { it.createdAt }
-        if (query.isNullOrBlank()) return beats
-
-        return beats.filter {
-            it.title.contains(query, ignoreCase = true) ||
-                it.genre.contains(query, ignoreCase = true)
-        }
+        val beats = store.getBeats().filter { it.producerId == producerId }
+        return filterBeats(beats, query)
     }
+
+    override fun getAllPublic(query: String?): List<Beat> =
+        filterBeats(store.getBeats(), query)
+
+    override fun getPublicById(beatId: UUID): Beat =
+        store.getBeat(beatId) ?: throw NoSuchElementException("Beat $beatId not found")
 
     override fun getById(producerId: UUID, beatId: UUID): Beat {
         val beat = store.getBeat(beatId) ?: throw NoSuchElementException("Beat $beatId not found")
@@ -65,5 +64,15 @@ class InMemoryBeatRepository(
     override fun delete(producerId: UUID, beatId: UUID) {
         getById(producerId, beatId)
         store.removeBeat(beatId)
+    }
+
+    private fun filterBeats(beats: List<Beat>, query: String?): List<Beat> {
+        val sorted = beats.sortedByDescending { it.createdAt }
+        if (query.isNullOrBlank()) return sorted
+
+        return sorted.filter {
+            it.title.contains(query, ignoreCase = true) ||
+                it.genre.contains(query, ignoreCase = true)
+        }
     }
 }
