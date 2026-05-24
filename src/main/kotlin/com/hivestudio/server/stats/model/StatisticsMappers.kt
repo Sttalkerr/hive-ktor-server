@@ -20,3 +20,12 @@ fun BeatEventType.toSimulationResponse(beatId: UUID, message: String): Simulatio
         eventType = name.lowercase(),
         message = message,
     )
+
+fun BeatHistoryPoint.toHistoryResponse(): BeatHistoryPointResponse =
+    BeatHistoryPointResponse(
+        date = date,
+        playsCount = playsCount,
+        likesCount = likesCount,
+        purchasesCount = purchasesCount,
+        revenueTotal = revenueTotal,
+    )

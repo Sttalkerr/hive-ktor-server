@@ -138,6 +138,20 @@ class ApplicationTest {
     }
 
     @Test
+    fun historyEndpointReturnsDailyDynamics() = testApplication {
+        val token = loginAndExtractToken()
+        val beatId = "22222222-2222-2222-2222-222222222222"
+
+        val response = client.get("/api/v1/beats/$beatId/history?days=7") {
+            bearer(token)
+        }
+
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertTrue(response.bodyAsText().contains("playsCount"))
+        assertTrue(response.bodyAsText().contains("date"))
+    }
+
+    @Test
     fun deleteBeatEndpointRemovesBeatAndStatsReturnNotFound() = testApplication {
         val token = registerAndExtractToken()
         val createResponse = client.post("/api/v1/beats") {

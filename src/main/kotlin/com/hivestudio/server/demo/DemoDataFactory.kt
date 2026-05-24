@@ -2,6 +2,7 @@ package com.hivestudio.server.demo
 
 import com.hivestudio.server.domain.model.Beat
 import com.hivestudio.server.domain.model.BeatEventType
+import com.hivestudio.server.domain.model.BeatEvent
 import com.hivestudio.server.domain.model.BeatStatistics
 import com.hivestudio.server.domain.model.Producer
 import java.math.BigDecimal
@@ -75,10 +76,72 @@ object DemoDataFactory {
     fun allStatistics(): Map<UUID, BeatStatistics> =
         beats().associate { beat -> beat.id to statistics(beat.id) }
 
+    fun events(): List<BeatEvent> = buildList {
+        addAll(
+            buildEventsForBeat(
+                beat = beat(firstBeatId),
+                dailyPlays = listOf(11, 14, 16, 18, 20, 22, 23),
+                dailyLikes = listOf(2, 4, 5, 6, 6, 7, 7),
+                dailyPurchases = listOf(1, 1, 1, 2, 1, 1, 2),
+            )
+        )
+        addAll(
+            buildEventsForBeat(
+                beat = beat(secondBeatId),
+                dailyPlays = listOf(8, 9, 10, 11, 12, 13, 13),
+                dailyLikes = listOf(2, 2, 3, 3, 3, 4, 4),
+                dailyPurchases = listOf(0, 1, 0, 1, 0, 1, 1),
+            )
+        )
+    }
+
     fun simulationMessage(beatId: UUID, eventType: BeatEventType): String =
         when (eventType) {
             BeatEventType.PLAY -> "Событие прослушивания добавлено для $beatId"
             BeatEventType.LIKE -> "Событие лайка добавлено для $beatId"
             BeatEventType.PURCHASE -> "Событие покупки добавлено для $beatId"
         }
+
+    private fun buildEventsForBeat(
+        beat: Beat,
+        dailyPlays: List<Int>,
+        dailyLikes: List<Int>,
+        dailyPurchases: List<Int>,
+    ): List<BeatEvent> {
+        val points = mutableListOf<BeatEvent>()
+        val dayOffsets = 0 until maxOf(dailyPlays.size, dailyLikes.size, dailyPurchases.size)
+
+        dayOffsets.forEach { index ->
+            val dayStart = baseTime.minusSeconds(((dayOffsets.last - index) * 86_400L))
+            repeat(dailyPlays.getOrElse(index) { 0 }) { playIndex ->
+                points += BeatEvent(
+                    id = UUID.randomUUID(),
+                    beatId = beat.id,
+                    eventType = BeatEventType.PLAY,
+                    eventValue = BigDecimal.ZERO,
+                    createdAt = dayStart.plusSeconds(playIndex.toLong() * 300),
+                )
+            }
+            repeat(dailyLikes.getOrElse(index) { 0 }) { likeIndex ->
+                points += BeatEvent(
+                    id = UUID.randomUUID(),
+                    beatId = beat.id,
+                    eventType = BeatEventType.LIKE,
+                    eventValue = BigDecimal.ZERO,
+                    createdAt = dayStart.plusSeconds(10_000 + likeIndex.toLong() * 600),
+                )
+            }
+            repeat(dailyPurchases.getOrElse(index) { 0 }) { purchaseIndex ->
+                points += BeatEvent(
+                    id = UUID.randomUUID(),
+                    beatId = beat.id,
+                    eventType = BeatEventType.PURCHASE,
+                    eventValue = beat.price,
+                    createdAt = dayStart.plusSeconds(20_000 + purchaseIndex.toLong() * 900),
+                )
+            }
+        }
+
+        return points.sortedBy { it.createdAt }
+    }
 }

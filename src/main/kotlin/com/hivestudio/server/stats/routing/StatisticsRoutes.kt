@@ -3,6 +3,7 @@ package com.hivestudio.server.stats.routing
 import com.hivestudio.server.common.auth.requireProducer
 import com.hivestudio.server.common.di.AppGraph
 import com.hivestudio.server.domain.model.BeatEventType
+import com.hivestudio.server.stats.model.toHistoryResponse
 import com.hivestudio.server.stats.service.StatisticsService
 import com.hivestudio.server.stats.model.toSimulationResponse
 import com.hivestudio.server.stats.model.toStatisticsResponse
@@ -23,6 +24,17 @@ fun Route.statisticsRoutes(
             val beatId = call.parameters["beatId"]?.let(UUID::fromString)
                 ?: throw IllegalArgumentException("Beat ID is required")
             call.respond(statisticsService.getStatistics(UUID.fromString(producer.id), beatId).toStatisticsResponse())
+        }
+
+        get("/history") {
+            val producer = call.requireProducer()
+            val beatId = call.parameters["beatId"]?.let(UUID::fromString)
+                ?: throw IllegalArgumentException("Beat ID is required")
+            val days = call.request.queryParameters["days"]?.toIntOrNull() ?: 7
+            call.respond(
+                statisticsService.getHistory(UUID.fromString(producer.id), beatId, days)
+                    .map { it.toHistoryResponse() }
+            )
         }
 
         route("/simulate") {

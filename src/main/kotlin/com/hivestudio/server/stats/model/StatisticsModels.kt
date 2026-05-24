@@ -18,3 +18,20 @@ data class SimulationResponse(
     val eventType: String,
     val message: String,
 )
+
+@Serializable
+data class BeatHistoryPointResponse(
+    val date: String,
+    val playsCount: Int,
+    val likesCount: Int,
+    val purchasesCount: Int,
+    val revenueTotal: Double,
+)
+
+data class BeatHistoryPoint(
+    val date: String,
+    val playsCount: Int,
+    val likesCount: Int,
+    val purchasesCount: Int,
+    val revenueTotal: Double,
+)

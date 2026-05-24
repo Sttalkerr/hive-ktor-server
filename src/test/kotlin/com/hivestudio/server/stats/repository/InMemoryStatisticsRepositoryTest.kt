@@ -21,4 +21,16 @@ class InMemoryStatisticsRepositoryTest {
         assertEquals(before.purchasesCount + 1, after.purchasesCount)
         assertTrue(after.revenueTotal > before.revenueTotal)
     }
+
+    @Test
+    fun historyReturnsRequestedNumberOfDays() {
+        val store = InMemoryHiveStore.seeded()
+        val repository = InMemoryStatisticsRepository(store)
+        val beat = DemoDataFactory.beats().first()
+
+        val history = repository.getHistory(beat.id, days = 7)
+
+        assertEquals(7, history.size)
+        assertTrue(history.any { it.playsCount > 0 })
+    }
 }
