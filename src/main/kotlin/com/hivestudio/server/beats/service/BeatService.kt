@@ -18,6 +18,7 @@ class BeatService(
         beatRepository.create(request)
 
     fun deleteBeat(beatId: UUID) {
+        beatRepository.getById(beatId)
         beatRepository.delete(beatId)
     }
 }

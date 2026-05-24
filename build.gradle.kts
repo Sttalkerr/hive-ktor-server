@@ -25,6 +25,7 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation-jvm:2.3.12")
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:2.3.12")
     implementation("io.ktor:ktor-server-call-logging-jvm:2.3.12")
+    implementation("io.ktor:ktor-server-status-pages-jvm:2.3.12")
     implementation("io.ktor:ktor-server-config-yaml-jvm:2.3.12")
     implementation("org.jetbrains.exposed:exposed-core:0.53.0")
     implementation("org.jetbrains.exposed:exposed-jdbc:0.53.0")

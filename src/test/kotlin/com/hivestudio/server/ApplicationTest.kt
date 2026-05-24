@@ -2,6 +2,7 @@ package com.hivestudio.server
 
 import io.ktor.client.request.get
 import io.ktor.client.request.post
+import io.ktor.client.request.delete
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
@@ -79,6 +80,33 @@ class ApplicationTest {
         assertTrue(simulateResponse.bodyAsText().contains("purchase"))
         assertEquals(beforePurchases + 1, afterPurchases)
     }
+
+    @Test
+    fun deleteBeatEndpointRemovesBeatAndStatsReturnNotFound() = testApplication {
+        val createResponse = client.post("/api/v1/beats") {
+            contentType(ContentType.Application.Json)
+            setBody(
+                """
+                {
+                  "title": "Erase Me",
+                  "genre": "Trap",
+                  "bpm": 150,
+                  "price": 4100.0,
+                  "description": "Beat to delete",
+                  "mp3FileName": "erase-me.mp3"
+                }
+                """.trimIndent()
+            )
+        }
+        val beatId = extractStringField(createResponse.bodyAsText(), "id")
+
+        val deleteResponse = client.delete("/api/v1/beats/$beatId")
+        val statsResponse = client.get("/api/v1/beats/$beatId/stats")
+
+        assertEquals(HttpStatusCode.NoContent, deleteResponse.status)
+        assertEquals(HttpStatusCode.NotFound, statsResponse.status)
+        assertTrue(statsResponse.bodyAsText().contains("not found", ignoreCase = true))
+    }
 }
 
 private fun extractObjectCount(json: String): Int =
@@ -87,5 +115,11 @@ private fun extractObjectCount(json: String): Int =
 private fun extractIntField(json: String, fieldName: String): Int {
     val regex = """"$fieldName"\s*:\s*(\d+)""".toRegex()
     return regex.find(json)?.groupValues?.get(1)?.toInt()
+        ?: error("Field $fieldName not found in response: $json")
+}
+
+private fun extractStringField(json: String, fieldName: String): String {
+    val regex = """"$fieldName"\s*:\s*"([^"]+)"""".toRegex()
+    return regex.find(json)?.groupValues?.get(1)
         ?: error("Field $fieldName not found in response: $json")
 }

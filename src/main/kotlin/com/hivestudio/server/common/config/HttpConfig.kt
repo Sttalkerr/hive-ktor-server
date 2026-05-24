@@ -9,6 +9,7 @@ import kotlinx.serialization.json.Json
 
 fun Application.configureHttp() {
     install(CallLogging)
+    configureStatusPages()
     install(ContentNegotiation) {
         json(
             Json {
