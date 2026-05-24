@@ -11,3 +11,6 @@ database:
   password: "postgres"
   connectOnStartup: false
   showSql: false
+
+storage:
+  uploadDir: "./storage/uploads"

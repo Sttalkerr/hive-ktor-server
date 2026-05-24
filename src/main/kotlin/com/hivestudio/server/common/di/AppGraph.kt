@@ -10,10 +10,14 @@ import com.hivestudio.server.profile.service.ProfileService
 import com.hivestudio.server.stats.repository.InMemoryStatisticsRepository
 import com.hivestudio.server.stats.repository.StatisticsRepository
 import com.hivestudio.server.stats.service.StatisticsService
+import com.hivestudio.server.storage.FileStorageService
+import com.hivestudio.server.storage.StorageSettings
 import com.hivestudio.server.store.InMemoryHiveStore
 
 object AppGraph {
     private val store = InMemoryHiveStore.seeded()
+    val storageSettings: StorageSettings = StorageSettings(uploadDir = "./storage/uploads")
+    val fileStorageService: FileStorageService = FileStorageService(storageSettings)
 
     val producerRepository: ProducerRepository = DemoProducerRepository()
     val beatRepository: BeatRepository = InMemoryBeatRepository(store)
