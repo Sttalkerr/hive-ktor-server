@@ -8,6 +8,11 @@ object ProducersTable : UUIDTable("producers") {
     val email = varchar("email", 255).uniqueIndex()
     val passwordHash = varchar("password_hash", 255)
     val stageName = varchar("stage_name", 120)
+    val bio = text("bio").default("")
+    val city = varchar("city", 120).default("")
+    val contactTag = varchar("contact_tag", 120).default("")
+    val avatarFileName = varchar("avatar_file_name", 255).nullable()
+    val avatarStoragePath = text("avatar_storage_path").nullable()
     val createdAt = timestampWithTimeZone("created_at")
     val updatedAt = timestampWithTimeZone("updated_at")
 }

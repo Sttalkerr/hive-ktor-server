@@ -1,13 +1,17 @@
 package com.hivestudio.server.database.config
 
 import com.hivestudio.server.database.schema.HiveStudioTables
+import com.hivestudio.server.database.seed.DatabaseSeeder
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.server.application.ApplicationEnvironment
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.transactions.transaction
 
 object DatabaseFactory {
     private var dataSource: HikariDataSource? = null
+    private var database: Database? = null
 
     fun initialize(
         environment: ApplicationEnvironment,
@@ -37,7 +41,12 @@ object DatabaseFactory {
         }
 
         dataSource = HikariDataSource(hikariConfig)
-        Database.connect(dataSource!!)
+        database = Database.connect(dataSource!!)
+
+        transaction(database) {
+            SchemaUtils.createMissingTablesAndColumns(*HiveStudioTables.allTables.toTypedArray())
+            DatabaseSeeder.seedIfNeeded()
+        }
 
         if (settings.showSql) {
             environment.log.info("PostgreSQL connection initialized with SQL logging requested by config.")
@@ -46,5 +55,12 @@ object DatabaseFactory {
         environment.log.info(
             "Database connection initialized. Registered schema tables: ${HiveStudioTables.allTables.joinToString { it.tableName }}"
         )
+    }
+
+    fun isConnected(): Boolean = database != null
+
+    fun <T> query(block: () -> T): T {
+        val currentDatabase = database ?: error("Database is not initialized")
+        return transaction(currentDatabase) { block() }
     }
 }

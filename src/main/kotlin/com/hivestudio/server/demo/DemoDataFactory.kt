@@ -19,7 +19,7 @@ object DemoDataFactory {
         Producer(
             id = producerId,
             email = "producer@hivestudio.dev",
-            passwordHash = "demo-password-hash",
+            passwordHash = "hash:secret123",
             stageName = "Hive Demo",
             bio = "Продюсер электронных и trap-релизов для Hive Studio.",
             city = "Москва",
