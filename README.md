@@ -48,39 +48,3 @@ database:
   connectOnStartup: true
   showSql: false
 ```
-
-## Запуск
-
-1. Убедись, что локально поднят `PostgreSQL`.
-2. Убедись, что существует база `hive_studio`.
-3. Запусти сервер:
-
-```bash
-cd /Users/matthew/AndroidStudioProjects/kurs/hive-studio-server
-./gradlew run
-```
-
-Сервер стартует на:
-
-`http://localhost:8081`
-
-## Проверка
-
-Проверка health endpoint:
-
-```bash
-curl http://localhost:8081/health
-```
-
-Проверка тестов:
-
-```bash
-cd /Users/matthew/AndroidStudioProjects/kurs/hive-studio-server
-./gradlew test
-```
-
-## Полезные документы
-
-- API контракт: [`docs/api-contract.md`](/Users/matthew/AndroidStudioProjects/kurs/hive-studio-server/docs/api-contract.md)
-- SQL схема: [`docs/postgresql-schema.sql`](/Users/matthew/AndroidStudioProjects/kurs/hive-studio-server/docs/postgresql-schema.sql)
-- Сценарий демонстрации: [`docs/demo-flow.md`](/Users/matthew/AndroidStudioProjects/kurs/hive-studio-server/docs/demo-flow.md)
