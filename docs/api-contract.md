@@ -2,54 +2,25 @@
 
 Base path: `/api/v1`
 
-## Authentication
+## Auth
 
 ### `POST /auth/register`
 
-Creates a producer account.
-
-Request body:
-
-```json
-{
-  "email": "producer@example.com",
-  "password": "secret123",
-  "stageName": "Night Hive"
-}
-```
-
-Response `201 Created`:
-
-```json
-{
-  "id": "uuid",
-  "email": "producer@example.com",
-  "stageName": "Night Hive",
-  "token": "jwt-token"
-}
-```
+Создаёт аккаунт продюсера.
 
 ### `POST /auth/login`
 
-Authenticates the producer.
+Выполняет вход продюсера.
 
-Request body:
-
-```json
-{
-  "email": "producer@example.com",
-  "password": "secret123"
-}
-```
-
-Response `200 OK`:
+Оба endpoints возвращают:
 
 ```json
 {
   "id": "uuid",
   "email": "producer@example.com",
   "stageName": "Night Hive",
-  "token": "jwt-token"
+  "avatarUrl": "/uploads/avatar.jpg",
+  "token": "bearer-token"
 }
 ```
 
@@ -57,56 +28,56 @@ Response `200 OK`:
 
 ### `GET /profile`
 
-Returns the current producer profile.
+Возвращает текущий профиль продюсера.
 
-Response `200 OK`:
+### `PUT /profile`
 
-```json
-{
-  "id": "uuid",
-  "email": "producer@example.com",
-  "stageName": "Night Hive",
-  "createdAt": "2026-05-24T00:00:00Z"
-}
-```
+Обновляет:
 
-## Beats
+- `stageName`
+- `bio`
+- `city`
+- `contactTag`
 
-### `GET /beats`
+### `POST /profile/avatar`
 
-Returns a producer beat list with search and sorting.
+Загружает аватар через `multipart/form-data`.
+
+## Public Catalog
+
+### `GET /catalog/beats`
+
+Возвращает публичный каталог всех битов.
 
 Query params:
 
-- `query` - search by beat title
-- `genre` - optional genre filter
-- `sort` - `newest`, `oldest`, `title`
+- `query`
 
-Response `200 OK`:
+### `GET /catalog/beats/{beatId}`
 
-```json
-[
-  {
-    "id": "uuid",
-    "title": "Midnight Pulse",
-    "genre": "Trap",
-    "bpm": 140,
-    "price": 29.99,
-    "description": "Dark trap beat",
-    "mp3FileName": "midnight-pulse.mp3",
-    "coverImageFileName": "midnight-pulse-cover.jpg",
-    "createdAt": "2026-05-24T00:00:00Z"
-  }
-]
-```
+Возвращает карточку публичного бита.
+
+### `GET /catalog/beats/{beatId}/stats`
+
+Возвращает публичную статистику бита.
+
+### `GET /catalog/beats/{beatId}/history?days=7`
+
+Возвращает историю аналитики по дням.
+
+## Producer Beats
+
+### `GET /beats`
+
+Возвращает список битов авторизованного продюсера.
 
 ### `GET /beats/{beatId}`
 
-Returns a single beat card.
+Возвращает один бит автора.
 
 ### `POST /beats`
 
-Creates a beat using `multipart/form-data`.
+Создаёт бит через `multipart/form-data`.
 
 Form fields:
 
@@ -118,59 +89,40 @@ Form fields:
 - `mp3`
 - `coverImage`
 
-Response `201 Created`:
+### `PUT /beats/{beatId}`
 
-```json
-{
-  "id": "uuid",
-  "title": "Midnight Pulse",
-  "genre": "Trap",
-  "bpm": 140,
-    "price": 29.99,
-    "description": "Dark trap beat",
-    "mp3FileName": "midnight-pulse.mp3",
-    "coverImageFileName": "midnight-pulse-cover.jpg",
-    "createdAt": "2026-05-24T00:00:00Z"
-  }
-```
+Редактирует метаданные бита:
+
+- `title`
+- `genre`
+- `bpm`
+- `price`
+- `description`
 
 ### `DELETE /beats/{beatId}`
 
-Deletes a beat and its statistics.
-
-Response `204 No Content`
+Удаляет бит.
 
 ## Statistics
 
 ### `GET /beats/{beatId}/stats`
 
-Returns aggregated beat statistics.
+Возвращает агрегированную статистику собственного бита.
 
-Response `200 OK`:
+### `GET /beats/{beatId}/history?days=7`
 
-```json
-{
-  "beatId": "uuid",
-  "playsCount": 124,
-  "likesCount": 37,
-  "purchasesCount": 9,
-  "revenueTotal": 269.91,
-  "updatedAt": "2026-05-24T00:00:00Z"
-}
-```
+Возвращает историю аналитики по дням.
 
 ## Simulated Activity
 
-Because the system has only one user role, statistics are created by service-side activity simulation.
-
 ### `POST /beats/{beatId}/simulate/play`
 
-Adds one play event.
+Добавляет прослушивание.
 
 ### `POST /beats/{beatId}/simulate/like`
 
-Adds one like event.
+Добавляет лайк.
 
 ### `POST /beats/{beatId}/simulate/purchase`
 
-Adds one purchase event and increases revenue by the beat price.
+Добавляет покупку и увеличивает выручку.

@@ -1,30 +1,86 @@
 # Hive Studio Server
 
-Ktor API for the Hive Studio coursework project.
+Серверная часть курсового проекта `Hive Studio`, написанная на `Ktor`.
 
-## Current Stage
+## Что реализовано
 
-The repository currently contains:
+- авторизация продюсера
+- профиль продюсера
+- публичный каталог битов
+- список собственных битов
+- создание, редактирование и удаление бита
+- загрузка `mp3` и квадратной обложки
+- статистика по биту
+- история аналитики по дням
+- симуляция событий `play / like / purchase`
+- хранение данных в `PostgreSQL`
 
-- Ktor scaffold with a working `GET /health` endpoint
-- initial PostgreSQL schema draft
-- initial API contract draft
+## Технологии
 
-## Domain Model
+- `Ktor`
+- `Exposed`
+- `PostgreSQL`
+- `HikariCP`
+- `Kotlinx Serialization`
 
-The server is built around a single role: producer.
+## Структура данных
 
-Core entities:
+Основные сущности:
 
-- `Producer` - account owner who uploads and manages beats
-- `Beat` - uploaded music item with metadata and an MP3 file
-- `BeatStatistics` - aggregated analytics for a beat
-- `BeatEvent` - atomic event used to build statistics
+- `Producer`
+- `Beat`
+- `BeatStatistics`
+- `BeatEvent`
 
-## Planned API Areas
+## Конфигурация
 
-- authentication
-- producer profile
-- beats catalog and search
-- MP3 upload and beat deletion
-- analytics and simulated activity events
+Основной конфиг:
+
+[`src/main/resources/application.yaml`](/Users/matthew/AndroidStudioProjects/kurs/hive-studio-server/src/main/resources/application.yaml)
+
+Текущие параметры для локального запуска:
+
+```yaml
+database:
+  jdbcUrl: "jdbc:postgresql://localhost:5432/hive_studio"
+  user: "matthew"
+  password: ""
+  connectOnStartup: true
+  showSql: false
+```
+
+## Запуск
+
+1. Убедись, что локально поднят `PostgreSQL`.
+2. Убедись, что существует база `hive_studio`.
+3. Запусти сервер:
+
+```bash
+cd /Users/matthew/AndroidStudioProjects/kurs/hive-studio-server
+./gradlew run
+```
+
+Сервер стартует на:
+
+`http://localhost:8081`
+
+## Проверка
+
+Проверка health endpoint:
+
+```bash
+curl http://localhost:8081/health
+```
+
+Проверка тестов:
+
+```bash
+cd /Users/matthew/AndroidStudioProjects/kurs/hive-studio-server
+./gradlew test
+```
+
+## Полезные документы
+
+- API контракт: [`docs/api-contract.md`](/Users/matthew/AndroidStudioProjects/kurs/hive-studio-server/docs/api-contract.md)
+- SQL схема: [`docs/postgresql-schema.sql`](/Users/matthew/AndroidStudioProjects/kurs/hive-studio-server/docs/postgresql-schema.sql)
+- Сценарий демонстрации: [`docs/demo-flow.md`](/Users/matthew/AndroidStudioProjects/kurs/hive-studio-server/docs/demo-flow.md)
