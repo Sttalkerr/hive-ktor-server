@@ -2,6 +2,7 @@ package com.hivestudio.server.beats.routing
 
 import com.hivestudio.server.beats.model.CreateBeatRequest
 import com.hivestudio.server.beats.model.BeatSummaryResponse
+import com.hivestudio.server.beats.model.UpdateBeatRequest
 import com.hivestudio.server.beats.model.toBeatSummaryResponse
 import com.hivestudio.server.beats.service.BeatService
 import com.hivestudio.server.common.auth.requireProducer
@@ -20,6 +21,7 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
+import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import java.util.UUID
 
@@ -68,6 +70,17 @@ fun Route.beatRoutes(
             call.respond(
                 status = HttpStatusCode.Created,
                 message = beatService.createBeat(UUID.fromString(producer.id), request)
+                    .toBeatSummaryResponse(AppGraph.producerRepository.getById(UUID.fromString(producer.id))),
+            )
+        }
+
+        put("/{beatId}") {
+            val producer = call.requireProducer()
+            val beatId = call.parameters["beatId"]?.let(UUID::fromString)
+                ?: throw IllegalArgumentException("Beat ID is required")
+            val request = call.receive<UpdateBeatRequest>()
+            call.respond(
+                beatService.updateBeat(UUID.fromString(producer.id), beatId, request)
                     .toBeatSummaryResponse(AppGraph.producerRepository.getById(UUID.fromString(producer.id))),
             )
         }

@@ -30,3 +30,12 @@ data class CreateBeatRequest(
     val mp3FileName: String,
     val coverImageFileName: String,
 )
+
+@Serializable
+data class UpdateBeatRequest(
+    val title: String,
+    val genre: String,
+    val bpm: Int,
+    val price: Double,
+    val description: String,
+)

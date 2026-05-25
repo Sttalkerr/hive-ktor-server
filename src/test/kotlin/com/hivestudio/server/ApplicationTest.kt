@@ -4,6 +4,7 @@ import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
@@ -183,6 +184,50 @@ class ApplicationTest {
         assertEquals(HttpStatusCode.NoContent, deleteResponse.status)
         assertEquals(HttpStatusCode.NotFound, statsResponse.status)
         assertTrue(statsResponse.bodyAsText().contains("not found", ignoreCase = true))
+    }
+
+    @Test
+    fun updateBeatEndpointChangesBeatMetadata() = testApplication {
+        val token = registerAndExtractToken()
+        val createResponse = client.post("/api/v1/beats") {
+            bearer(token)
+            contentType(ContentType.Application.Json)
+            setBody(
+                """
+                {
+                  "title": "Editable Beat",
+                  "genre": "Trap",
+                  "bpm": 140,
+                  "price": 2900.0,
+                  "description": "Initial description",
+                  "mp3FileName": "editable.mp3",
+                  "coverImageFileName": "editable-cover.jpg"
+                }
+                """.trimIndent()
+            )
+        }
+        val beatId = extractStringField(createResponse.bodyAsText(), "id")
+
+        val updateResponse = client.put("/api/v1/beats/$beatId") {
+            bearer(token)
+            contentType(ContentType.Application.Json)
+            setBody(
+                """
+                {
+                  "title": "Editable Beat Revised",
+                  "genre": "Drill",
+                  "bpm": 148,
+                  "price": 3700.0,
+                  "description": "Updated description"
+                }
+                """.trimIndent()
+            )
+        }
+
+        assertEquals(HttpStatusCode.OK, updateResponse.status)
+        assertTrue(updateResponse.bodyAsText().contains("Editable Beat Revised"))
+        assertTrue(updateResponse.bodyAsText().contains("3700.0"))
+        assertTrue(updateResponse.bodyAsText().contains("Drill"))
     }
 
     @Test

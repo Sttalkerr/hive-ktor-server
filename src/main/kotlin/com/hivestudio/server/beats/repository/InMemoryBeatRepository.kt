@@ -1,6 +1,7 @@
 package com.hivestudio.server.beats.repository
 
 import com.hivestudio.server.beats.model.CreateBeatRequest
+import com.hivestudio.server.beats.model.UpdateBeatRequest
 import com.hivestudio.server.domain.model.Beat
 import com.hivestudio.server.domain.model.BeatStatistics
 import com.hivestudio.server.store.InMemoryHiveStore
@@ -59,6 +60,20 @@ class InMemoryBeatRepository(
             )
         )
         return beat
+    }
+
+    override fun update(producerId: UUID, beatId: UUID, request: UpdateBeatRequest): Beat {
+        val current = getById(producerId, beatId)
+        val updated = current.copy(
+            title = request.title.trim(),
+            genre = request.genre.trim(),
+            bpm = request.bpm,
+            price = BigDecimal.valueOf(request.price),
+            description = request.description.trim(),
+            updatedAt = Instant.now(),
+        )
+        store.putBeat(updated)
+        return updated
     }
 
     override fun delete(producerId: UUID, beatId: UUID) {

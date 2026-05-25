@@ -1,6 +1,7 @@
 package com.hivestudio.server.beats.service
 
 import com.hivestudio.server.beats.model.CreateBeatRequest
+import com.hivestudio.server.beats.model.UpdateBeatRequest
 import com.hivestudio.server.beats.repository.BeatRepository
 import com.hivestudio.server.domain.model.Beat
 import com.hivestudio.server.domain.model.Producer
@@ -29,6 +30,9 @@ class BeatService(
 
     fun createBeat(producerId: UUID, request: CreateBeatRequest): Beat =
         beatRepository.create(producerId, request)
+
+    fun updateBeat(producerId: UUID, beatId: UUID, request: UpdateBeatRequest): Beat =
+        beatRepository.update(producerId, beatId, request)
 
     fun deleteBeat(producerId: UUID, beatId: UUID) {
         beatRepository.getById(producerId, beatId)
