@@ -7,6 +7,7 @@ import com.hivestudio.server.beats.model.toBeatSummaryResponse
 import com.hivestudio.server.beats.service.BeatService
 import com.hivestudio.server.common.auth.requireProducer
 import com.hivestudio.server.common.di.AppGraph
+import com.hivestudio.server.stats.repository.StatisticsRepository
 import com.hivestudio.server.storage.FileStorageService
 import io.ktor.http.ContentType
 import io.ktor.http.content.PartData
@@ -27,6 +28,7 @@ import java.util.UUID
 
 fun Route.beatRoutes(
     beatService: BeatService = AppGraph.beatService,
+    statisticsRepository: StatisticsRepository = AppGraph.statisticsRepository,
     fileStorageService: FileStorageService = AppGraph.fileStorageService,
 ) {
     route("/catalog/beats") {
@@ -34,7 +36,9 @@ fun Route.beatRoutes(
             val query = call.request.queryParameters["query"]
             val beats: List<BeatSummaryResponse> = beatService
                 .getCatalogBeats(query)
-                .map { (beat, producer) -> beat.toBeatSummaryResponse(producer) }
+                .map { (beat, producer) ->
+                    beat.toBeatSummaryResponse(producer, statisticsRepository.getStatistics(beat.id))
+                }
             call.respond(beats)
         }
 
@@ -42,7 +46,7 @@ fun Route.beatRoutes(
             val beatId = call.parameters["beatId"]?.let(UUID::fromString)
                 ?: throw IllegalArgumentException("Beat ID is required")
             val (beat, producer) = beatService.getCatalogBeat(beatId)
-            call.respond(beat.toBeatSummaryResponse(producer))
+            call.respond(beat.toBeatSummaryResponse(producer, statisticsRepository.getStatistics(beat.id)))
         }
     }
 
@@ -52,7 +56,9 @@ fun Route.beatRoutes(
             val query = call.request.queryParameters["query"]
             val beats: List<BeatSummaryResponse> = beatService
                 .getBeats(UUID.fromString(producer.id), query)
-                .map { (beat, owner) -> beat.toBeatSummaryResponse(owner) }
+                .map { (beat, owner) ->
+                    beat.toBeatSummaryResponse(owner, statisticsRepository.getStatistics(beat.id))
+                }
             call.respond(beats)
         }
 
@@ -61,16 +67,20 @@ fun Route.beatRoutes(
             val beatId = call.parameters["beatId"]?.let(UUID::fromString)
                 ?: throw IllegalArgumentException("Beat ID is required")
             val (beat, owner) = beatService.getBeat(UUID.fromString(producer.id), beatId)
-            call.respond(beat.toBeatSummaryResponse(owner))
+            call.respond(beat.toBeatSummaryResponse(owner, statisticsRepository.getStatistics(beat.id)))
         }
 
         post {
             val producer = call.requireProducer()
             val request = call.parseCreateBeatRequest(fileStorageService)
+            val createdBeat = beatService.createBeat(UUID.fromString(producer.id), request)
             call.respond(
                 status = HttpStatusCode.Created,
-                message = beatService.createBeat(UUID.fromString(producer.id), request)
-                    .toBeatSummaryResponse(AppGraph.producerRepository.getById(UUID.fromString(producer.id))),
+                message = createdBeat
+                    .toBeatSummaryResponse(
+                        AppGraph.producerRepository.getById(UUID.fromString(producer.id)),
+                        statisticsRepository.getStatistics(createdBeat.id),
+                    ),
             )
         }
 
@@ -79,9 +89,12 @@ fun Route.beatRoutes(
             val beatId = call.parameters["beatId"]?.let(UUID::fromString)
                 ?: throw IllegalArgumentException("Beat ID is required")
             val request = call.receive<UpdateBeatRequest>()
+            val updatedBeat = beatService.updateBeat(UUID.fromString(producer.id), beatId, request)
             call.respond(
-                beatService.updateBeat(UUID.fromString(producer.id), beatId, request)
-                    .toBeatSummaryResponse(AppGraph.producerRepository.getById(UUID.fromString(producer.id))),
+                updatedBeat.toBeatSummaryResponse(
+                    AppGraph.producerRepository.getById(UUID.fromString(producer.id)),
+                    statisticsRepository.getStatistics(updatedBeat.id),
+                )
             )
         }
 
