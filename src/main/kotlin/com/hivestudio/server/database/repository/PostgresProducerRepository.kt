@@ -1,5 +1,6 @@
 package com.hivestudio.server.database.repository
 
+import com.hivestudio.server.common.security.PasswordHasher
 import com.hivestudio.server.auth.model.LoginRequest
 import com.hivestudio.server.auth.model.RegisterRequest
 import com.hivestudio.server.database.config.DatabaseFactory
@@ -33,7 +34,7 @@ class PostgresProducerRepository : ProducerRepository {
         ProducersTable.insert {
             it[id] = EntityID(producerId, ProducersTable)
             it[email] = request.email.trim()
-            it[passwordHash] = "hash:${request.password}"
+            it[passwordHash] = PasswordHasher.hash(request.password)
             it[stageName] = request.stageName.trim()
             it[bio] = ""
             it[city] = ""
@@ -53,10 +54,19 @@ class PostgresProducerRepository : ProducerRepository {
             ?.toProducer()
             ?: throw IllegalArgumentException("Producer with email ${request.email} not found")
 
-        if (producer.passwordHash != "hash:${request.password}") {
+        if (!PasswordHasher.verify(request.password, producer.passwordHash)) {
             throw IllegalArgumentException("Invalid password")
         }
-        producer
+        if (PasswordHasher.needsUpgrade(producer.passwordHash)) {
+            val upgradedHash = PasswordHasher.hash(request.password)
+            ProducersTable.update({ ProducersTable.id eq producer.id }) {
+                it[passwordHash] = upgradedHash
+                it[updatedAt] = Instant.now().toOffsetUtc()
+            }
+            producer.copy(passwordHash = upgradedHash, updatedAt = Instant.now())
+        } else {
+            producer
+        }
     }
 
     override fun issueToken(producer: Producer): String {

@@ -1,5 +1,6 @@
 package com.hivestudio.server.demo
 
+import com.hivestudio.server.common.security.PasswordHasher
 import com.hivestudio.server.domain.model.Beat
 import com.hivestudio.server.domain.model.BeatEventType
 import com.hivestudio.server.domain.model.BeatEvent
@@ -19,7 +20,7 @@ object DemoDataFactory {
         Producer(
             id = producerId,
             email = "producer@hivestudio.dev",
-            passwordHash = "hash:secret123",
+            passwordHash = PasswordHasher.hash("secret123"),
             stageName = "Hive Demo",
             bio = "Продюсер электронных и trap-релизов для Hive Studio.",
             city = "Москва",

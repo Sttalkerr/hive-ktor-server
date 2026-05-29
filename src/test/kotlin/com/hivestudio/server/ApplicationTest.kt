@@ -61,7 +61,7 @@ class ApplicationTest {
     @Test
     fun profileReflectsAuthorizedProducer() = testApplication {
         val token = registerAndExtractToken(
-            email = "profile-check@hive.dev",
+            email = "profile-check-${UUID.randomUUID()}@hive.dev",
             stageName = "Profile Check",
         )
 
@@ -118,8 +118,26 @@ class ApplicationTest {
 
     @Test
     fun simulatePurchaseEndpointChangesStatistics() = testApplication {
-        val token = loginAndExtractToken()
-        val beatId = "22222222-2222-2222-2222-222222222222"
+        val token = registerAndExtractToken()
+        val createResponse = client.post("/api/v1/beats") {
+            bearer(token)
+            contentType(ContentType.Application.Json)
+            setBody(
+                """
+                {
+                  "title": "Purchase Check",
+                  "genre": "Trap",
+                  "bpm": 142,
+                  "price": 3500.0,
+                  "description": "Statistics check beat",
+                  "mp3FileName": "purchase-check.mp3",
+                  "coverImageFileName": "purchase-check-cover.jpg"
+                }
+                """.trimIndent()
+            )
+        }
+        val beatId = extractStringField(createResponse.bodyAsText(), "id")
+
         val beforeResponse = client.get("/api/v1/beats/$beatId/stats") {
             bearer(token)
         }
@@ -140,8 +158,28 @@ class ApplicationTest {
 
     @Test
     fun historyEndpointReturnsDailyDynamics() = testApplication {
-        val token = loginAndExtractToken()
-        val beatId = "22222222-2222-2222-2222-222222222222"
+        val token = registerAndExtractToken()
+        val createResponse = client.post("/api/v1/beats") {
+            bearer(token)
+            contentType(ContentType.Application.Json)
+            setBody(
+                """
+                {
+                  "title": "History Check",
+                  "genre": "Lo-Fi",
+                  "bpm": 88,
+                  "price": 1990.0,
+                  "description": "History check beat",
+                  "mp3FileName": "history-check.mp3",
+                  "coverImageFileName": "history-check-cover.jpg"
+                }
+                """.trimIndent()
+            )
+        }
+        val beatId = extractStringField(createResponse.bodyAsText(), "id")
+        client.post("/api/v1/beats/$beatId/simulate/play") {
+            bearer(token)
+        }
 
         val response = client.get("/api/v1/beats/$beatId/history?days=7") {
             bearer(token)
@@ -233,7 +271,7 @@ class ApplicationTest {
     @Test
     fun producersSeeOnlyOwnBeatCatalog() = testApplication {
         val firstToken = registerAndExtractToken(
-            email = "first@hive.dev",
+            email = "first-${UUID.randomUUID()}@hive.dev",
             stageName = "First Hive",
         )
         client.post("/api/v1/beats") {
@@ -255,7 +293,7 @@ class ApplicationTest {
         }
 
         val secondToken = registerAndExtractToken(
-            email = "second@hive.dev",
+            email = "second-${UUID.randomUUID()}@hive.dev",
             stageName = "Second Hive",
         )
         val secondCatalog = client.get("/api/v1/beats") {
@@ -284,7 +322,9 @@ private suspend fun ApplicationTestBuilder.registerAndExtractToken(
             """.trimIndent()
         )
     }
-    return extractStringField(response.bodyAsText(), "token")
+    val body = response.bodyAsText()
+    assertEquals(HttpStatusCode.Created, response.status, body)
+    return extractStringField(body, "token")
 }
 
 private suspend fun ApplicationTestBuilder.loginAndExtractToken(
@@ -302,7 +342,9 @@ private suspend fun ApplicationTestBuilder.loginAndExtractToken(
             """.trimIndent()
         )
     }
-    return extractStringField(response.bodyAsText(), "token")
+    val body = response.bodyAsText()
+    assertEquals(HttpStatusCode.OK, response.status, body)
+    return extractStringField(body, "token")
 }
 
 private fun io.ktor.client.request.HttpRequestBuilder.bearer(token: String) {

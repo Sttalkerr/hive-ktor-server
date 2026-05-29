@@ -1,5 +1,6 @@
 package com.hivestudio.server.profile.repository
 
+import com.hivestudio.server.common.security.PasswordHasher
 import com.hivestudio.server.auth.model.LoginRequest
 import com.hivestudio.server.auth.model.RegisterRequest
 import com.hivestudio.server.demo.DemoDataFactory
@@ -10,17 +11,14 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 class InMemoryProducerRepository : ProducerRepository {
-    private val producers = ConcurrentHashMap<String, ProducerRecord>()
+    private val producers = ConcurrentHashMap<String, Producer>()
     private val producersById = ConcurrentHashMap<UUID, String>()
     private val tokens = ConcurrentHashMap<String, String>()
 
     init {
         val seed = DemoDataFactory.producer()
         val emailKey = seed.email.lowercase()
-        producers[emailKey] = ProducerRecord(
-            producer = seed,
-            plainPassword = "secret123",
-        )
+        producers[emailKey] = seed
         producersById[seed.id] = emailKey
     }
 
@@ -34,7 +32,7 @@ class InMemoryProducerRepository : ProducerRepository {
         val producer = Producer(
             id = UUID.randomUUID(),
             email = request.email.trim(),
-            passwordHash = "hash:${request.password}",
+            passwordHash = PasswordHasher.hash(request.password),
             stageName = request.stageName.trim(),
             bio = "",
             city = "",
@@ -44,22 +42,24 @@ class InMemoryProducerRepository : ProducerRepository {
             createdAt = now,
             updatedAt = now,
         )
-        producers[emailKey] = ProducerRecord(
-            producer = producer,
-            plainPassword = request.password,
-        )
+        producers[emailKey] = producer
         producersById[producer.id] = emailKey
         return producer
     }
 
     override fun login(request: LoginRequest): Producer {
         val emailKey = request.email.trim().lowercase()
-        val record = producers[emailKey]
+        val producer = producers[emailKey]
             ?: throw IllegalArgumentException("Producer with email ${request.email} not found")
-        if (record.plainPassword != request.password) {
+        if (!PasswordHasher.verify(request.password, producer.passwordHash)) {
             throw IllegalArgumentException("Invalid password")
         }
-        return record.producer
+        if (PasswordHasher.needsUpgrade(producer.passwordHash)) {
+            val upgraded = producer.copy(passwordHash = PasswordHasher.hash(request.password))
+            save(upgraded)
+            return upgraded
+        }
+        return producer
     }
 
     override fun issueToken(producer: Producer): String {
@@ -71,14 +71,14 @@ class InMemoryProducerRepository : ProducerRepository {
     override fun getByToken(token: String): Producer {
         val emailKey = tokens[token]
             ?: throw NoSuchElementException("Session token not found")
-        return producers[emailKey]?.producer
+        return producers[emailKey]
             ?: throw NoSuchElementException("Producer for session token not found")
     }
 
     override fun getById(producerId: UUID): Producer {
         val emailKey = producersById[producerId]
             ?: throw NoSuchElementException("Producer $producerId not found")
-        return producers[emailKey]?.producer
+        return producers[emailKey]
             ?: throw NoSuchElementException("Producer $producerId not found")
     }
 
@@ -108,13 +108,8 @@ class InMemoryProducerRepository : ProducerRepository {
 
     private fun save(producer: Producer) {
         val emailKey = producer.email.lowercase()
-        val currentRecord = producers[emailKey] ?: error("Producer ${producer.email} not found")
-        producers[emailKey] = currentRecord.copy(producer = producer)
+        check(producers.containsKey(emailKey)) { "Producer ${producer.email} not found" }
+        producers[emailKey] = producer
         producersById[producer.id] = emailKey
     }
 }
-
-private data class ProducerRecord(
-    val producer: Producer,
-    val plainPassword: String,
-)
