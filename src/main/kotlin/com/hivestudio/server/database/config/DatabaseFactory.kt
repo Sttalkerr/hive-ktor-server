@@ -31,8 +31,12 @@ object DatabaseFactory {
 
         val hikariConfig = HikariConfig().apply {
             jdbcUrl = settings.jdbcUrl
-            username = settings.user
-            password = settings.password
+            if (settings.user.isNotBlank()) {
+                username = settings.user
+            }
+            if (settings.password.isNotBlank()) {
+                password = settings.password
+            }
             driverClassName = "org.postgresql.Driver"
             maximumPoolSize = 10
             isAutoCommit = false
